@@ -99,7 +99,7 @@ void ptq_destroy(ptq_queue_t queue) {
 
 // Nonblocking write to the queue.
 // Returns true if a write was performed, false otherwise.
-bool ptq_send_nonblock(ptq_queue_t queue, void *object) {
+bool ptq_send_nonblock(ptq_queue_t queue, void *object, pthread_mutex_t *mutex_to_lock) {
 	
 	// Await write space.
 	int res = sem_trywait(&queue->write_sem);
@@ -150,6 +150,9 @@ bool ptq_send_nonblock(ptq_queue_t queue, void *object) {
 		sem_post(&queue->read_sem);
 	}
 	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
+	
 	// Release the mutex.
 	res = pthread_mutex_unlock(&queue->mutex);
 	
@@ -158,7 +161,7 @@ bool ptq_send_nonblock(ptq_queue_t queue, void *object) {
 
 // Blocking write to the queue.
 // Waits until the queue has space before returning.
-bool ptq_send_block(ptq_queue_t queue, void *object) {
+bool ptq_send_block(ptq_queue_t queue, void *object, pthread_mutex_t *mutex_to_lock) {
 	
 	// Await write space.
 	int res = sem_wait(&queue->write_sem);
@@ -209,6 +212,9 @@ bool ptq_send_block(ptq_queue_t queue, void *object) {
 		sem_post(&queue->read_sem);
 	}
 	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
+	
 	// Release the mutex.
 	res = pthread_mutex_unlock(&queue->mutex);
 	
@@ -217,7 +223,7 @@ bool ptq_send_block(ptq_queue_t queue, void *object) {
 
 // Nonblocking read from the queue.
 // Returns true if a read was performed, false otherwise.
-bool ptq_receive_nonblock(ptq_queue_t queue, void *object) {
+bool ptq_receive_nonblock(ptq_queue_t queue, void *object, pthread_mutex_t *mutex_to_lock) {
 	
 	// Await read data.
 	int res = sem_trywait(&queue->read_sem);
@@ -262,6 +268,9 @@ bool ptq_receive_nonblock(ptq_queue_t queue, void *object) {
 		sem_post(&queue->write_sem);
 	}
 	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
+	
 	// Release the mutex.
 	res = pthread_mutex_unlock(&queue->mutex);
 	
@@ -270,7 +279,7 @@ bool ptq_receive_nonblock(ptq_queue_t queue, void *object) {
 
 // Nonblocking read from the queue.
 // Waits until the queue has space before returning.
-bool ptq_receive_block(ptq_queue_t queue, void *object) {
+bool ptq_receive_block(ptq_queue_t queue, void *object, pthread_mutex_t *mutex_to_lock) {
 	
 	// Await read data.
 	int res = sem_wait(&queue->read_sem);
@@ -313,6 +322,9 @@ bool ptq_receive_block(ptq_queue_t queue, void *object) {
 		sem_post(&queue->write_sem);
 	}
 	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
+	
 	// Release the mutex.
 	res = pthread_mutex_unlock(&queue->mutex);
 	
@@ -322,7 +334,7 @@ bool ptq_receive_block(ptq_queue_t queue, void *object) {
 // Blocking wait for empty.
 // Waits until the queue is completely empty before returning.
 // Does not gaurantee that the queue remains empty; only waits for it to happen.
-bool ptq_join(ptq_queue_t queue) {
+bool ptq_join(ptq_queue_t queue, pthread_mutex_t *mutex_to_lock) {
 	
 	// Await empty semaphore.
 	int res = sem_wait(&queue->empty_sem);
@@ -331,6 +343,9 @@ bool ptq_join(ptq_queue_t queue) {
 	// Acquire the read/write mutex.
 	res = pthread_mutex_lock(&queue->mutex);
 	if (res) return false;
+	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
 	
 	// If still empty, re-enable empty semaphore.
 	if (!queue->length) {
@@ -344,11 +359,14 @@ bool ptq_join(ptq_queue_t queue) {
 }
 
 // Gets the length of the queue.
-size_t ptq_get_length(ptq_queue_t queue) {
+size_t ptq_get_length(ptq_queue_t queue, pthread_mutex_t *mutex_to_lock) {
 	
 	// Acquire the read/write mutex.
 	int res = pthread_mutex_lock(&queue->mutex);
 	if (res) return 0;
+	
+	// Acquire the other mutex.
+	if (mutex_to_lock) pthread_mutex_lock(mutex_to_lock);
 	
 	size_t retval = queue->length;
 	

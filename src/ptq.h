@@ -73,24 +73,30 @@ void ptq_destroy(ptq_queue_t queue);
 
 // Nonblocking write to the queue.
 // Returns true if a write was performed, false otherwise.
-bool ptq_send_nonblock(ptq_queue_t to, void *object);
+// If not NULL, will also lock mutex_to_lock on success.
+bool ptq_send_nonblock(ptq_queue_t to, void *object, pthread_mutex_t *mutex_to_lock);
 
 // Blocking write to the queue.
 // Waits until the queue has space before returning.
-bool ptq_send_block(ptq_queue_t to, void *object);
+// If not NULL, will also lock mutex_to_lock on success.
+bool ptq_send_block(ptq_queue_t to, void *object, pthread_mutex_t *mutex_to_lock);
 
 // Nonblocking read from the queue.
 // Returns true if a read was performed, false otherwise.
-bool ptq_receive_nonblock(ptq_queue_t from, void *object);
+// If not NULL, will also lock mutex_to_lock on success.
+bool ptq_receive_nonblock(ptq_queue_t from, void *object, pthread_mutex_t *mutex_to_lock);
 
 // Nonblocking read from the queue.
 // Waits until the queue has space before returning.
-bool ptq_receive_block(ptq_queue_t from, void *object);
+// If not NULL, will also lock mutex_to_lock on success.
+bool ptq_receive_block(ptq_queue_t from, void *object, pthread_mutex_t *mutex_to_lock);
 
 // Blocking wait for empty.
 // Waits until the queue is completely empty before returning.
 // Does not gaurantee that the queue remains empty; only waits for it to happen.
-bool ptq_join(ptq_queue_t queue);
+// If not NULL, will also lock mutex_to_lock on success.
+bool ptq_join(ptq_queue_t queue, pthread_mutex_t *mutex_to_lock);
 
 // Gets the length of the queue.
-size_t ptq_get_length(ptq_queue_t queue);
+// If not NULL, will also lock mutex_to_lock on success.
+size_t ptq_get_length(ptq_queue_t queue, pthread_mutex_t *mutex_to_lock);
