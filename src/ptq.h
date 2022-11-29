@@ -1,16 +1,16 @@
 
 #pragma once
 
-#ifdef PTQ_REVEAL_PRIVATE
-
-// Complete definition in private API.
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <string.h>
+
+#ifdef PTQ_REVEAL_PRIVATE
+
+// Complete definition in private API.
 
 // One link of data in the queue.
 typedef struct ptq_link ptq_link_t;
