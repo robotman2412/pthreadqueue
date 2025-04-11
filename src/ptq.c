@@ -64,16 +64,15 @@ ptq_queue_t ptq_create_max(size_t entry_size, size_t max_length) {
 // Creates a queue without a length limit.
 ptq_queue_t ptq_create(size_t entry_size) {
 	// You can't really fill the address space completely ;)
-	ptq_create_max(entry_size, (size_t) -1);
+	return ptq_create_max(entry_size, (size_t) -1);
 }
 
 // Destroys a queue.
 // Thread-safe to concurrent read and/or write.
 // Not thread-safe to use-after-free, which is up to the user.
 void ptq_destroy(ptq_queue_t queue) {
-	
 	// Acquire the mutex.
-	int res = pthread_mutex_lock(&queue->mutex);
+	pthread_mutex_lock(&queue->mutex);
 	
 	// Clear the linked list.
 	ptq_link_t *head = queue->head;
@@ -85,13 +84,13 @@ void ptq_destroy(ptq_queue_t queue) {
 	}
 	
 	// Destroy mutex.
-	res = pthread_mutex_unlock(&queue->mutex);
-	res = pthread_mutex_destroy(&queue->mutex);
+	pthread_mutex_unlock(&queue->mutex);
+	pthread_mutex_destroy(&queue->mutex);
 	
 	// Destroy semaphores.
-	res = sem_destroy(&queue->read_sem);
-	res = sem_destroy(&queue->write_sem);
-	res = sem_destroy(&queue->empty_sem);
+	sem_destroy(&queue->read_sem);
+	sem_destroy(&queue->write_sem);
+	sem_destroy(&queue->empty_sem);
 	
 	// Free memory.
 	free(queue);
